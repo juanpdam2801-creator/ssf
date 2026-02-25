@@ -7,19 +7,19 @@ empty=0
 for file in /organizador_del_caos/*; do
 if ls  *.txt >/dev/null 2>1; then
 echo "si existen txts, moviendo archivos"
-imgs++
+imgs=$((imgs + 1))
 else
 echo "no existe"
 fi
 if ls *.jpg >/dev/null  2>1; then
 echo "si existen imgs,moviendo archivos"
-imgs++
+imgs =$((imgs + 1))
 else
 echo "no existe"
 fi
 if ls *.png >/dev/null 2>1; then
 echo "si existen pngs, moviendo archivos"
-imgs++
+imgs =$((imgs + 1))
 else
 echo "no existen"
 fi

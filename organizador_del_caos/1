@@ -1,1 +1,127 @@
-ls: no se puede acceder a '*.docx': No existe el archivo o el directorio
+#!/bin/bash
+
+# ==============================
+# limpiador.sh
+# Script para organizar archivos por tipo
+# ==============================
+
+# --- Comprobación del parámetro ---
+if [ -z "$1" ]; then
+    DIR="$(pwd)"
+else
+    DIR="$1"
+fi
+
+if [ ! -d "$DIR" ]; then
+    echo "Error: el directorio indicado no existe."
+    exit 1
+fi
+
+cd "$DIR" || exit 1
+
+echo "Organizando directorio: $DIR"
+echo "-------------------------------------"
+
+# --- Crear carpetas destino si no existen ---
+mkdir -p IMGS DOCS TXTS PDFS VACIOS
+
+# --- Inicializar contadores ---
+imgs=0
+docs=0
+txts=0
+pdfs=0
+vacios=0
+
+# --- Clasificación de archivos ---
+for file in *; do
+    if [ -f "$file" ]; then
+        
+        # Comprobar si el archivo está vacío
+        if [ ! -s "$file" ]; then
+            mv "$file" VACIOS/
+            ((vacios++))
+            continue
+        fi
+
+        case "$file" in
+            *.jpg|*.png|*.gif)
+                mv "$file" IMGS/
+                ((imgs++))
+                ;;
+            *.docx|*.odt)
+                mv "$file" DOCS/
+                ((docs++))
+                ;;
+            *.txt)
+                mv "$file" TXTS/
+                ((txts++))
+                ;;
+            *.pdf)
+                mv "$file" PDFS/
+                ((pdfs++))
+                ;;
+        esac
+    fi
+done
+
+# --- Buscar carpetas vacías ---
+empty_dirs=()
+while IFS= read -r -d '' dir; do
+    empty_dirs+=("$dir")
+done < <(find . -type d -empty \
+    ! -path "./IMGS" \
+    ! -path "./DOCS" \
+    ! -path "./TXTS" \
+    ! -path "./PDFS" \
+    ! -path "./VACIOS" -print0)
+
+# --- Buscar archivos vacíos ---
+empty_files=()
+while IFS= read -r -d '' file; do
+    empty_files+=("$file")
+done < <(find VACIOS -type f -empty -print0)
+
+total_empty=$((${#empty_dirs[@]} + ${#empty_files[@]}))
+
+# --- Informe final ---
+echo ""
+echo "Informe final"
+echo "-------------------------------------"
+echo "Imagenes movidas: $imgs"
+echo "Documentos movidos: $docs"
+echo "Textos movidos: $txts"
+echo "PDFs movidos: $pdfs"
+echo "Elementos vacios encontrados: $total_empty"
+echo ""
+
+# --- Mostrar lista de vacíos y preguntar si se eliminan ---
+if [ "$total_empty" -gt 0 ]; then
+
+    echo "Archivos vacios:"
+    for f in "${empty_files[@]}"; do
+        echo " - $f"
+    done
+
+    echo ""
+    echo "Carpetas vacias:"
+    for d in "${empty_dirs[@]}"; do
+        echo " - $d"
+    done
+
+    echo ""
+    read -p "Desea eliminar estos elementos? (s/n): " opcion
+
+    if [[ "$opcion" == "s" || "$opcion" == "S" ]]; then
+        for f in "${empty_files[@]}"; do
+            rm -f "$f"
+        done
+        for d in "${empty_dirs[@]}"; do
+            rmdir "$d"
+        done
+        echo "Elementos vacios eliminados."
+    else
+        echo "No se han eliminado los elementos vacios."
+    fi
+fi
+
+echo "Proceso finalizado."

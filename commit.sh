@@ -1,4 +1,4 @@
-#!usr/bin/bash
+
 echo "dime el mensaje del commit"
 read mensaje
 git add .
